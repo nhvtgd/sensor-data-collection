@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.Time;
@@ -27,6 +28,9 @@ import com.getpebble.android.kit.PebbleKit.PebbleDataLogReceiver;
 import com.getpebble.android.kit.PebbleKit.PebbleDataReceiver;
 import com.getpebble.android.kit.util.PebbleDictionary;
 import com.google.common.primitives.UnsignedInteger;
+import com.superurop.activitydetection.datahub.java.DBException;
+import com.superurop.activitydetection.datahub.java.DataHubClient;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -36,6 +40,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
+
+import org.apache.thrift.TException;
 
 /**
  * Sample code demonstrating how Android applications can receive data logs from Pebble.
@@ -78,11 +84,20 @@ public class ExampleDataLoggingActivity extends Activity {
 	
 	List<String> accelerometerList = new ArrayList<String>();
 	
+	List<AccelDataModel> accelerometerDataSource = new ArrayList<AccelDataModel>();
+	
 	Activity act;
 	
 	static final int NO_SAVE_ACTIVITY = 2;
 	
 	static final int SAVE_ACTIVITY = 3;
+	
+	String currentActivity;
+	
+	String deviceID;
+	
+	
+	AccelerometerDataSource sqlLiteDAO;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,8 +131,10 @@ public class ExampleDataLoggingActivity extends Activity {
 					int position, long id) {
 				final String selectedActivity = (String) activityListView.getItemAtPosition(position);
 				final PebbleDictionary dict = new PebbleDictionary();
+
+				currentActivity = selectedActivity;
 				
-				// create a diablo to ask if you want to save the activity
+				// create a dialog to ask if you want to save the activity
 				new AlertDialog.Builder(act)
 			    .setTitle("Save Activity")
 			    .setMessage("Do you want to save this activity on your watch?")
@@ -140,17 +157,35 @@ public class ExampleDataLoggingActivity extends Activity {
 			}
 		});	
          
-         accelerometerListView = (ListView) findViewById(R.id.accelerometer_list);
-         accelerometerListAdapter = new ArrayAdapter<String>(this,
+        // initialize accelerometer list view
+        accelerometerListView = (ListView) findViewById(R.id.accelerometer_list);
+        accelerometerListAdapter = new ArrayAdapter<String>(this,
         		android.R.layout.simple_list_item_1, accelerometerList);
-         accelerometerListView.setAdapter(accelerometerListAdapter);
+        accelerometerListView.setAdapter(accelerometerListAdapter);
         
-         search = (EditText) findViewById(R.id.search_bar_listView);
-         search.addTextChangedListener(new TextChangeRecorder());
-         search.setSingleLine();
+        // Enable search bar
+        search = (EditText) findViewById(R.id.search_bar_listView);
+        search.addTextChangedListener(new TextChangeRecorder());
+        search.setSingleLine();
         DATE_FORMAT.setTimeZone(TimeZone.getDefault());
         
+        // initialize device ID
+        deviceID = getUserDeviceID();  
         
+        //sqlLiteDAO = new AccelerometerDataSource(this);
+    }
+    
+    public String getUserDeviceID() {
+    	final TelephonyManager tm = (TelephonyManager) getBaseContext().getSystemService(Context.TELEPHONY_SERVICE);
+
+        final String tmDevice, tmSerial, androidId;
+        tmDevice = "" + tm.getDeviceId();
+        tmSerial = "" + tm.getSimSerialNumber();
+        androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+
+        UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
+        String deviceId = deviceUuid.toString();
+        return deviceId;
     }
 
     @Override
@@ -186,36 +221,67 @@ public class ExampleDataLoggingActivity extends Activity {
             @Override
             public void receiveData(Context context, UUID logUuid, UnsignedInteger timestamp, UnsignedInteger tag, byte[] data) {
             	for (AccelData reading : AccelData.fromDataArray(data)) {
-            		if (second == 0 ) {
-            		    accelerometerList.add(String.format("Starting recording at %d", timestamp.longValue()));
-            		    handler.post(new Runnable() {
-            		    	@Override
-            		    	public void run() {
-            		    		updateUi();
-            		    	}
-            		    });
-            		}
+            		            		
             		accelerometerList.add(reading.toString());
-            		
+            		String activity = "";
+            		if (reading.getActivityLabel() == 0) {
+            			activity = "Running";
+            		} else if (reading.getActivityLabel() == 1) {
+            			activity = "Walking";
+            		} else {
+            			activity = currentActivity;
+            		}
+            		AccelDataModel accelDataSource = new AccelDataModel(String.valueOf(System.currentTimeMillis()), 
+            					activity, reading.getX(), reading.getY(), reading.getZ());
+            		accelerometerDataSource.add(accelDataSource);
         		    second = timestamp.longValue();
             		dataPoint++;
             		
             		last_timestamp = timestamp.longValue();
-
             	}
             }
             
             @Override
             public void onFinishSession(Context context, UUID logUuid, UnsignedInteger timestamp, UnsignedInteger tag) {
             	super.onFinishSession(context, logUuid, timestamp, tag);
-            	second = timestamp.longValue() - second;
+            	
             	accelerometerList.add(String.format("Recording end at %d collect %d points", timestamp.longValue(), dataPoint));
+            	
+            	
             	handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        updateUi();
+                    	updateUi();
+                    	/*
+                    	DataHubClient client;
+                    	try {
+        					client = new DataHubClient();
+        				} catch (Exception e) {
+        					sqlLiteDAO.batchInsert(accelerometerDataSource);
+        					e.printStackTrace();
+        					// if fail to create client, insert everything into database and return
+        					return;
+        				}
+                    	
+                    	for (AccelDataModel accelData : accelerometerDataSource) {
+                    		try {
+        						client.pushData(deviceID, accelData.getTimestamp(), accelData.getActivity(), 
+        									accelData.getX(), accelData.getY(), accelData.getZ());
+        					} catch (Exception e) {
+        						// TODO Auto-generated catch block
+        						e.printStackTrace();
+        						// if fail to push data, send to database
+        						sqlLiteDAO.createAccelerometer(accelData.getTimestamp(), accelData.getActivity(), 
+        									accelData.getX(), accelData.getY(), accelData.getZ());	
+        					}
+                    	};
+                    	*/
+                    	SubmitAccelDataToDataHub task = new SubmitAccelDataToDataHub(act);
+                    	AccelDataModel[] data = new AccelDataModel[accelerometerDataSource.size()];
+                    	task.execute(accelerometerDataSource.toArray(data));
                     }
                 });
+                
             }
             
         };

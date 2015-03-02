@@ -24,7 +24,23 @@ public class AccelData {
         z = (data[4] & 0xff) | (data[5] << 8);
         activityLabel = data[6];
     }
-
+    
+    public int getX() {
+    	return x;
+    }
+    
+    public int getY() {
+    	return y;
+    }
+    
+    public int getZ() {
+    	return z;
+    }
+    
+    public int getActivityLabel() {
+    	return activityLabel;
+    }
+    
     public JSONObject toJson() {
         JSONObject json = new JSONObject();
         try {
@@ -48,15 +64,6 @@ public class AccelData {
         return accels;
     }
 
-    /*
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void applyTimezone(TimeZone tz) {
-        timestamp -= tz.getOffset(timestamp);
-    }*/
-    
     public String toString() {
     	return String.format("Activity: %d, x: %d y: %d z: %d", activityLabel, x,y,z); 
     };

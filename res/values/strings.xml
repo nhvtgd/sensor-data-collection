@@ -3,5 +3,19 @@
 
     <string name="app_name">Activity Detection</string>
     <string name="action_settings">Settings</string>
-
+	<string-array name="intensity_array">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+    
+	<string-array name="dominant_array">
+        <item>Yes</item>
+        <item>No</item>
+    </string-array>
+    
+	<string name="intensity_selection">Intensity Level</string>	
+	<string name="dominant_hand">Is your pebble on your dominant hand?</string>	
 </resources>

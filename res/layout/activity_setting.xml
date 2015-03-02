@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:baselineAligned="false">
+    
+    <TextView 
+        style="?android:attr/textAppearanceLarge"
+ 	    android:text="@string/intensity_selection"
+ 	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_marginTop="5dp"	/>
+ 	<Spinner
+	    android:id="@+id/intensity_level_spinner"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" 
+	   	android:layout_marginBottom="5dp"/>
+ 	
+ 	<TextView 
+ 	    style="?android:attr/textAppearanceLarge"
+ 	    android:text="@string/dominant_hand"
+ 	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_marginTop="5dp"	/>
+ 	<Spinner
+	    android:id="@+id/dominant_hand_spinner"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content" 
+	    android:layout_marginBottom="5dp"/>
+ 	
+ 	<Button
+ 	    android:text="Next"
+	    android:id="@+id/next_bttn_activity_setting"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content" 
+	    android:layout_marginTop="5dp"
+	    style="?android:attr/button"
+	    android:layout_marginBottom="5dp"/>
+   
+</LinearLayout>
