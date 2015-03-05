@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -27,7 +28,6 @@ import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.PebbleKit.PebbleDataLogReceiver;
 import com.getpebble.android.kit.PebbleKit.PebbleDataReceiver;
 import com.getpebble.android.kit.util.PebbleDictionary;
-import com.google.common.primitives.UnsignedInteger;
 import com.superurop.activitydetection.datahub.java.DBException;
 import com.superurop.activitydetection.datahub.java.DataHubClient;
 
@@ -46,7 +46,7 @@ import org.apache.thrift.TException;
 /**
  * Sample code demonstrating how Android applications can receive data logs from Pebble.
  */
-public class ExampleDataLoggingActivity extends Activity {
+public class AccelDataLoggingActivity extends Activity {
     private static final UUID ACTIVITY_RECOGNITION = UUID.fromString("2834fa63-f127-494d-a231-c933bf0721d2");
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
 
@@ -96,8 +96,9 @@ public class ExampleDataLoggingActivity extends Activity {
 	
 	String deviceID;
 	
+	String dominant_hand;
 	
-	AccelerometerDataSource sqlLiteDAO;
+	String intensity_level;
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -172,54 +173,19 @@ public class ExampleDataLoggingActivity extends Activity {
         // initialize device ID
         deviceID = getUserDeviceID();  
         
-        //sqlLiteDAO = new AccelerometerDataSource(this);
-    }
-    
-    public String getUserDeviceID() {
-    	final TelephonyManager tm = (TelephonyManager) getBaseContext().getSystemService(Context.TELEPHONY_SERVICE);
-
-        final String tmDevice, tmSerial, androidId;
-        tmDevice = "" + tm.getDeviceId();
-        tmSerial = "" + tm.getSimSerialNumber();
-        androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-
-        UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
-        String deviceId = deviceUuid.toString();
-        return deviceId;
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mDataLogReceiver != null) {
-            unregisterReceiver(mDataLogReceiver);
-            mDataLogReceiver = null;
-        }
-        if (mActivityReceiver != null) {
-        	unregisterReceiver(mActivityReceiver);
-        	mActivityReceiver = null;
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
+        // get dominant hand and intensity from previous activity so we 
+        // can send at the same time and other data and don't generate more 
+        // network call unneccessary
+        Intent intent = getIntent();
+        dominant_hand = intent.getStringExtra("dominant_hand");
+        intensity_level = intent.getStringExtra("intensity_level");
         
-
-        // To receive data logs, Android applications must register a "DataLogReceiver" to receive data.
-        //
-        // In this example, we're implementing a handler to receive unsigned integer data that was logged by a
-        // corresponding watch-app. In the watch-app, three separate logs were created, one per animal. Each log was
-        // tagged with a key indicating the animal to which the data corresponds. So, the tag will be used here to
-        // look up the animal name when data is received.
-        //
-        // The data being received contains the seconds since the epoch (a timestamp) of when an ocean faring animal
-        // was sighted. The "timestamp" indicates when the log was first created, and will not be used in this example.
-
+        
+        // register
         final Handler handler = new Handler();
         mDataLogReceiver = new PebbleDataLogReceiver(ACTIVITY_RECOGNITION) {
             @Override
-            public void receiveData(Context context, UUID logUuid, UnsignedInteger timestamp, UnsignedInteger tag, byte[] data) {
+            public void receiveData(Context context, UUID logUuid, Long timestamp, Long tag, byte[] data) {
             	for (AccelData reading : AccelData.fromDataArray(data)) {
             		            		
             		accelerometerList.add(reading.toString());
@@ -233,6 +199,10 @@ public class ExampleDataLoggingActivity extends Activity {
             		}
             		AccelDataModel accelDataSource = new AccelDataModel(String.valueOf(System.currentTimeMillis()), 
             					activity, reading.getX(), reading.getY(), reading.getZ());
+            		accelDataSource.setDominantHand(dominant_hand.equals("Yes"));
+            		accelDataSource.setIntensityLevel(Integer.parseInt(intensity_level));
+            		accelDataSource.setDeviceID(deviceID);
+            		
             		accelerometerDataSource.add(accelDataSource);
         		    second = timestamp.longValue();
             		dataPoint++;
@@ -242,7 +212,7 @@ public class ExampleDataLoggingActivity extends Activity {
             }
             
             @Override
-            public void onFinishSession(Context context, UUID logUuid, UnsignedInteger timestamp, UnsignedInteger tag) {
+            public void onFinishSession(Context context, UUID logUuid, Long timestamp, Long tag) {
             	super.onFinishSession(context, logUuid, timestamp, tag);
             	
             	accelerometerList.add(String.format("Recording end at %d collect %d points", timestamp.longValue(), dataPoint));
@@ -252,30 +222,6 @@ public class ExampleDataLoggingActivity extends Activity {
                     @Override
                     public void run() {
                     	updateUi();
-                    	/*
-                    	DataHubClient client;
-                    	try {
-        					client = new DataHubClient();
-        				} catch (Exception e) {
-        					sqlLiteDAO.batchInsert(accelerometerDataSource);
-        					e.printStackTrace();
-        					// if fail to create client, insert everything into database and return
-        					return;
-        				}
-                    	
-                    	for (AccelDataModel accelData : accelerometerDataSource) {
-                    		try {
-        						client.pushData(deviceID, accelData.getTimestamp(), accelData.getActivity(), 
-        									accelData.getX(), accelData.getY(), accelData.getZ());
-        					} catch (Exception e) {
-        						// TODO Auto-generated catch block
-        						e.printStackTrace();
-        						// if fail to push data, send to database
-        						sqlLiteDAO.createAccelerometer(accelData.getTimestamp(), accelData.getActivity(), 
-        									accelData.getX(), accelData.getY(), accelData.getZ());	
-        					}
-                    	};
-                    	*/
                     	SubmitAccelDataToDataHub task = new SubmitAccelDataToDataHub(act);
                     	AccelDataModel[] data = new AccelDataModel[accelerometerDataSource.size()];
                     	task.execute(accelerometerDataSource.toArray(data));
@@ -302,15 +248,38 @@ public class ExampleDataLoggingActivity extends Activity {
 
         PebbleKit.requestDataLogsForApp(this, ACTIVITY_RECOGNITION);
     }
+    
+    public String getUserDeviceID() {
+    	final TelephonyManager tm = (TelephonyManager) getBaseContext().getSystemService(Context.TELEPHONY_SERVICE);
 
+        final String tmDevice, tmSerial, androidId;
+        tmDevice = "" + tm.getDeviceId();
+        tmSerial = "" + tm.getSimSerialNumber();
+        androidId = "" + android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+
+        UUID deviceUuid = new UUID(androidId.hashCode(), ((long)tmDevice.hashCode() << 32) | tmSerial.hashCode());
+        String deviceId = deviceUuid.toString();
+        return deviceId;
+    }
+
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
+        if (mDataLogReceiver != null) {
+            unregisterReceiver(mDataLogReceiver);
+            mDataLogReceiver = null;
+        }
+        if (mActivityReceiver != null) {
+        	unregisterReceiver(mActivityReceiver);
+        	mActivityReceiver = null;
+        }
+    }
+    
     private void updateUi() {
         accelerometerListAdapter.notifyDataSetChanged();
         Toast.makeText(this, String.format("Receive %d in %d seconds", dataPoint, second), Toast.LENGTH_LONG).show();
     }
 
-    private String getUintAsTimestamp(UnsignedInteger uint) {
-        return DATE_FORMAT.format(new Date(uint.longValue() * 1000L)).toString();
-    }
     
     private class TextChangeRecorder implements TextWatcher {
 

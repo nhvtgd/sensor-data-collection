@@ -1,0 +1,33 @@
+
+// create client
+
+
+// create a normal client for SQL
+- (datahubDataHubClient *) createDataHubClient {
+    NSURL *datahub_url = [[NSURL alloc] initWithString:@"https://datahub.csail.mit.edu/service"];
+    THTTPClient *datahub_transport = [[THTTPClient alloc] initWithURL:datahub_url];
+    TBinaryProtocol *datahub_protocol = [[TBinaryProtocol alloc] initWithTransport:datahub_transport];
+    datahubDataHubClient *datahub_client = [[datahubDataHubClient alloc] initWithProtocol:datahub_protocol];
+    
+    return datahub_client;
+}
+
+
+
+// send sql/create user account
+
+datahubConnectionParams *con_params_app = [[datahubConnectionParams alloc] initWithClient_id:nil seq_id:nil user:nil password:nil app_id:appID app_token:appToken repo_base:username];
+datahubConnection * con_app = [datahub_client open_connection:con_params_app];
+[datahub_client execute_sql:con_app query:statement query_params:nil];
+
+
+
+// close connection
+
+
+// notes on this:
+// there are exceptions everywhere.
+// wrap everything in try catch statements
+// http://datahub.csail.mit.edu/apps/console/
+
+// coeus agreement

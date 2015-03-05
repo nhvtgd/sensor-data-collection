@@ -8,6 +8,9 @@ public class AccelDataModel {
 	private String timestamp;
 	private boolean isSubmitted;
 	private long id;
+	private boolean isDominantHand;
+	private int intensityLevel;
+	private String deviceID;
 	
 	public AccelDataModel(String timestamp, String activity, int x, int y, int z) {
 		this.setX(x);
@@ -16,6 +19,9 @@ public class AccelDataModel {
 		this.setActivity(activity);
 		this.setTimestamp(timestamp);
 		this.setSubmitted(false);
+		this.setDominantHand(true);
+		this.setIntensityLevel(3);
+		this.setDeviceID("");
 	}
 
 	public int getX() {
@@ -77,5 +83,29 @@ public class AccelDataModel {
 
 	public void setId(long id) {
 		this.id = id;
+	}
+
+	public boolean isDominantHand() {
+		return isDominantHand;
+	}
+
+	public void setDominantHand(boolean isDominantHand) {
+		this.isDominantHand = isDominantHand;
+	}
+
+	public int getIntensityLevel() {
+		return intensityLevel;
+	}
+
+	public void setIntensityLevel(int intensityLevel) {
+		this.intensityLevel = intensityLevel;
+	}
+
+	public String getDeviceID() {
+		return deviceID;
+	}
+
+	public void setDeviceID(String deviceID) {
+		this.deviceID = deviceID;
 	}
 }

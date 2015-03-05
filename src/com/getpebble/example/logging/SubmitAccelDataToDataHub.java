@@ -36,6 +36,8 @@ public class SubmitAccelDataToDataHub extends AsyncTask<AccelDataModel, Void, Bo
 				jsobject.put("X", accelData.getX());
 				jsobject.put("Y", accelData.getY());
 				jsobject.put("Z", accelData.getZ());
+				jsobject.put("DHand", accelData.isDominantHand() ? 1 : 0);
+				jsobject.put("Intensity", accelData.getIntensityLevel());
 				jsArray.put(jsobject);
 			}
 			client.pushData(jsArray.toString());

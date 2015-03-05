@@ -17,6 +17,7 @@ public class AccelData {
     final private int z;
 
     final private int activityLabel;
+    
 
     public AccelData(byte[] data) {
         x = (data[0] & 0xff) | (data[1] << 8);
