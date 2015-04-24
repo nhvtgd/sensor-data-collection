@@ -11,5 +11,13 @@
 	<classpathentry kind="lib" path="libs/pebblekit-2.6.0-eclipse.jar"/>
 	<classpathentry kind="lib" path="libs/slf4j-simple-1.7.5.jar"/>
 	<classpathentry kind="lib" path="libs/slf4j-1.7.10/slf4j-api-1.7.10.jar"/>
+	<classpathentry kind="lib" path="/Users/trannguyen/Downloads/android-sdk-macosx/platforms/android-17/android.jar" sourcepath="/Users/trannguyen/Downloads/android-sdk-macosx/sources/android-17">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/Users/trannguyen/Downloads/android-sdk-macosx/docs/reference"/>
+		</attributes>
+		<accessrules>
+			<accessrule kind="nonaccessible" pattern="com/android/internal/**"/>
+		</accessrules>
+	</classpathentry>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

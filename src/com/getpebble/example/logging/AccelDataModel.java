@@ -77,14 +77,6 @@ public class AccelDataModel {
 		return String.format("Timestamp %s Activity %s X %d Y %d Z %d", this.timestamp, this.activity, this.x, this.y, this.z);
 	}
 
-	public long getId() {
-		return id;
-	}
-
-	public void setId(long id) {
-		this.id = id;
-	}
-
 	public boolean isDominantHand() {
 		return isDominantHand;
 	}

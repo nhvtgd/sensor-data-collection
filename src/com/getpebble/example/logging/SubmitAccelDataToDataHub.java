@@ -1,5 +1,6 @@
 package com.getpebble.example.logging;
 
+import java.util.Date;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -18,19 +19,29 @@ public class SubmitAccelDataToDataHub extends AsyncTask<AccelDataModel, Void, Bo
 	
 	private Exception exception;
 	Activity act;
+	String repo_base;
+	boolean hasStopSignal;
+	boolean hasStartSignal;
 	
-	public SubmitAccelDataToDataHub(Activity activity) {
+	public SubmitAccelDataToDataHub(Activity activity, String repo_base, boolean hasStopSignal, boolean hasStartSignal) {
 		this.act = activity;
+		this.repo_base = repo_base;
+		this.hasStopSignal = hasStopSignal;
+		this.hasStartSignal = hasStartSignal;
 	}
 
 	@Override
 	protected Boolean doInBackground(AccelDataModel... params) {
 		try {
-			DataHubClient client = new DataHubClient();
+			DataHubClient client = new DataHubClient(repo_base);
 			JSONArray jsArray = new JSONArray();
-			for (AccelDataModel accelData : params) {
+			for (int i = 0 ; i < params.length; i ++) {
+				AccelDataModel accelData = params[i];
 				JSONObject jsobject = new JSONObject();
-				jsobject.put("DeviceID", accelData.getId());
+				if (hasStartSignal && i == 0) {
+					jsobject.put("START", accelData.getTimestamp());
+				}
+				jsobject.put("DeviceID", accelData.getDeviceID());
 				jsobject.put("Timestamp", accelData.getTimestamp());
 				jsobject.put("Activity", accelData.getActivity());
 				jsobject.put("X", accelData.getX());
@@ -40,7 +51,14 @@ public class SubmitAccelDataToDataHub extends AsyncTask<AccelDataModel, Void, Bo
 				jsobject.put("Intensity", accelData.getIntensityLevel());
 				jsArray.put(jsobject);
 			}
-			client.pushData(jsArray.toString());
+			if (hasStopSignal) { // get the last data point
+				if (params.length > 0) {
+					((JSONObject) jsArray.get(jsArray.length()-1)).put("STOP", params[params.length-1].getTimestamp());
+				}
+			}
+			if (jsArray.length() > 0 ) {
+				client.pushData(jsArray.toString());
+			}
 		} catch (Exception e) {
 			Log.e("[SUBMIT DATA", "Fail to submit data to datahub");
 			return false;

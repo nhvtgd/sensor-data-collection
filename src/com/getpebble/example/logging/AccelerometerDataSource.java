@@ -50,12 +50,12 @@ public class AccelerometerDataSource {
 	  public void updateAccelerometer(AccelDataModel model) {
 		  ContentValues value = createContentValueFromAccelData(model);
 		  
-		  database.update(MySQLiteHelper.TABLE_ACCELEROMETER, value, MySQLiteHelper.COLUMN_ID + " = " + model.getId(), null);
+		  database.update(MySQLiteHelper.TABLE_ACCELEROMETER, value, MySQLiteHelper.COLUMN_ID + " = " + model.getDeviceID(), null);
 	  }
 	  
 	  private ContentValues createContentValueFromAccelData(AccelDataModel model) {
 		  ContentValues value = new ContentValues();
-		  value.put(MySQLiteHelper.COLUMN_ID, model.getId());
+		  value.put(MySQLiteHelper.COLUMN_ID, model.getDeviceID());
 		  value.put(MySQLiteHelper.COLUMN_TIMESTAMP, model.getTimestamp());
 		  value.put(MySQLiteHelper.COLUMN_ACTIVITY, model.getActivity());
 		  value.put(MySQLiteHelper.COLUMN_X, model.getX());

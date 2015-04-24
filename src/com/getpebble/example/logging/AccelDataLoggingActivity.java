@@ -1,12 +1,15 @@
 package com.getpebble.example.logging;
 
 import static android.widget.Toast.makeText;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -28,6 +31,7 @@ import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.PebbleKit.PebbleDataLogReceiver;
 import com.getpebble.android.kit.PebbleKit.PebbleDataReceiver;
 import com.getpebble.android.kit.util.PebbleDictionary;
+import com.getpebble.example.logging.login.SignInScreen;
 import com.superurop.activitydetection.datahub.java.DBException;
 import com.superurop.activitydetection.datahub.java.DataHubClient;
 
@@ -37,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -49,14 +54,18 @@ import org.apache.thrift.TException;
 public class AccelDataLoggingActivity extends Activity {
     private static final UUID ACTIVITY_RECOGNITION = UUID.fromString("2834fa63-f127-494d-a231-c933bf0721d2");
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
-
+    private int STOP_SIGNAL = 0xFFFF;
+    private int START_SIGNAL = 0x0000;
+    static final String ACTIVITY_LABEL = "Activity"; // parent node
+    static final String DURATION = "Duration";
+    
     private final StringBuilder mDisplayText = new StringBuilder();
     private int dataPoint = 0;
     long second = 0;
     
     ArrayAdapter<String> activityListAdapter;
     
-    ArrayAdapter<String> accelerometerListAdapter;
+    LazyAdapter accelerometerListAdapter;
     
     // Activity List
     ListView activityListView;
@@ -92,18 +101,28 @@ public class AccelDataLoggingActivity extends Activity {
 	
 	static final int SAVE_ACTIVITY = 3;
 	
-	String currentActivity;
+	String currentActivity, deviceID, dominant_hand, intensity_level, repo_base = "";
 	
-	String deviceID;
+	SharedPreferences pref;
 	
-	String dominant_hand;
+	boolean receiveStopSignal;
+	boolean receiveStartSignal;
 	
-	String intensity_level;
+	long start, stop;
+	
+	ArrayList<HashMap<String, String>> activity_duration_list = new ArrayList<HashMap<String, String>>();
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_counter);
+        
+        // in order to arrive to this screen the user must have registered or login
+        // and that should be saved in share preference already
+        pref = getSharedPreferences(SignInScreen.SETTING, 0);
+        repo_base = pref.getString(SignInScreen.USERNAME, null);
+        assert repo_base != null;
+        
         act = this;
          activityList = Arrays.asList("Aerobics", "American Football", "Badminton", 
         		 "Ballet", "Bandy", "Baseball", "Basketball", "Beach Volleyball", 
@@ -115,11 +134,30 @@ public class AccelDataLoggingActivity extends Activity {
         		 "Kite Surfing", "Lacrosse", "Marshall Arts", "Paddling", "Paintball", 
         		 "Parkour", "Petanque", "Pilates", "Polo", "Racquetball", "Riding", 
         		 "Roller Blading", "Roller Skiing", "Roller Skating", "Rowing", "Rugby", 
-        		 "Running", "Running on Treadmill", "Scuba Diving", "Shoveling", "Shoveling Snow", 
+        		 "Running", "Running on Treadmill", "Scuba Diving", "Shoveling", "Shoveling Snow", "Sitting",
         		 "Skateboarding", "Snowboarding", "Snow Shoeing", "Soccer", "Spinning", "Squash", 
         		 "Stair Climbing", "Stretching", "Surfing", "Swimming", "Table Tennis", "Tennis", 
         		 "Volleyball", "Walking", "Walking on Treadmill", "Water Polo", "Weight Training", 
         		 "Wheelchair", "Wind Surfing", "Wrestling", "Yoga", "Zumba");
+         
+         
+         boolean connected = PebbleKit.isWatchConnected(getApplicationContext());
+         if (!connected){
+        	 showDisconnectionAlert();
+         }
+         
+         PebbleKit.registerPebbleDisconnectedReceiver(getApplicationContext(), new BroadcastReceiver() {
+
+        	  @Override
+        	  public void onReceive(Context context, Intent intent) {
+        		  showDisconnectionAlert();
+        	  }
+
+        	});
+         
+         // send signal to pebble to start the app
+         // Launching my app
+         PebbleKit.startAppOnPebble(getApplicationContext(), ACTIVITY_RECOGNITION);
          
          activityListView = (ListView) findViewById(R.id.activity_list);
          activityListAdapter = new ArrayAdapter<String>(this,
@@ -152,16 +190,14 @@ public class AccelDataLoggingActivity extends Activity {
 			        }
 			     })
 			    .setIcon(android.R.drawable.ic_dialog_alert)
-			     .show();
-
-				
+			    .show();				
 			}
 		});	
          
         // initialize accelerometer list view
         accelerometerListView = (ListView) findViewById(R.id.accelerometer_list);
-        accelerometerListAdapter = new ArrayAdapter<String>(this,
-        		android.R.layout.simple_list_item_1, accelerometerList);
+        accelerometerListAdapter = new LazyAdapter(this, activity_duration_list); 
+        		
         accelerometerListView.setAdapter(accelerometerListAdapter);
         
         // Enable search bar
@@ -188,14 +224,12 @@ public class AccelDataLoggingActivity extends Activity {
             public void receiveData(Context context, UUID logUuid, Long timestamp, Long tag, byte[] data) {
             	for (AccelData reading : AccelData.fromDataArray(data)) {
             		            		
-            		accelerometerList.add(reading.toString());
-            		String activity = "";
-            		if (reading.getActivityLabel() == 0) {
-            			activity = "Running";
-            		} else if (reading.getActivityLabel() == 1) {
-            			activity = "Walking";
-            		} else {
+            		//accelerometerList.add(reading.toString());
+            		String activity = getActivityLabel(reading.getActivityLabel());
+            		if (activity == "") { // this is customized activity
             			activity = currentActivity;
+            		} else if (currentActivity == null || currentActivity.length() == 0) {
+            			currentActivity = activity;
             		}
             		AccelDataModel accelDataSource = new AccelDataModel(String.valueOf(System.currentTimeMillis()), 
             					activity, reading.getX(), reading.getY(), reading.getZ());
@@ -215,16 +249,20 @@ public class AccelDataLoggingActivity extends Activity {
             public void onFinishSession(Context context, UUID logUuid, Long timestamp, Long tag) {
             	super.onFinishSession(context, logUuid, timestamp, tag);
             	
-            	accelerometerList.add(String.format("Recording end at %d collect %d points", timestamp.longValue(), dataPoint));
+            	//accelerometerList.add(String.format("Recording end at %d collect %d points", timestamp.longValue(), dataPoint));
             	
             	
             	handler.post(new Runnable() {
                     @Override
                     public void run() {
                     	updateUi();
-                    	SubmitAccelDataToDataHub task = new SubmitAccelDataToDataHub(act);
+                    	SubmitAccelDataToDataHub task = new SubmitAccelDataToDataHub(act, repo_base, receiveStopSignal, receiveStartSignal);
                     	AccelDataModel[] data = new AccelDataModel[accelerometerDataSource.size()];
                     	task.execute(accelerometerDataSource.toArray(data));
+                    	
+                    	// whenever we submit the data, we need to clear the state
+                    	receiveStopSignal = false;
+                    	receiveStartSignal = false;
                     }
                 });
                 
@@ -237,8 +275,38 @@ public class AccelDataLoggingActivity extends Activity {
 			@Override
 			public void receiveData(Context context, int transactionId,
 					PebbleDictionary data) {
-				
-				
+				if (data.contains(STOP_SIGNAL)) {
+					receiveStopSignal = true;
+					stop = new Date().getTime();
+					HashMap<String, String> act_duration = new HashMap<String,String>();
+					String activity = getActivityLabel(data.getInteger(STOP_SIGNAL).intValue());
+					if (activity.length() == 0) {
+						activity = currentActivity;
+					} else if (currentActivity == null || currentActivity.length() == 0) {
+						currentActivity = activity;
+					}
+						
+					act_duration.put(ACTIVITY_LABEL, activity); 
+					act_duration.put(DURATION, String.valueOf((stop-start)/1000));
+					activity_duration_list.add(act_duration);
+					
+					handler.post(new Runnable() {
+						
+						@Override
+						public void run() {
+							updateUi();							
+						}
+					});
+				} else if (data.contains(START_SIGNAL)) {
+					start = new Date().getTime();
+					receiveStartSignal = true;
+					String activity = getActivityLabel(data.getInteger(START_SIGNAL).intValue());
+					if (activity.length() == 0) {
+						activity = currentActivity;
+					} else if (currentActivity == null || currentActivity.length() == 0) {
+						currentActivity = activity;
+					}
+				}				
 			}
 		};
 		
@@ -247,6 +315,32 @@ public class AccelDataLoggingActivity extends Activity {
         PebbleKit.registerDataLogReceiver(this, mDataLogReceiver);
 
         PebbleKit.requestDataLogsForApp(this, ACTIVITY_RECOGNITION);
+    }
+    
+    private String getActivityLabel(int label) {
+    	String activity = "";
+		if (label == 0) {
+			activity = "Sitting";
+		} else if (label == 1) {
+			activity = "Walking";
+		
+		} else {
+			activity = currentActivity;
+		}
+		return activity;
+    }
+    
+    private void showDisconnectionAlert() {
+    	new AlertDialog.Builder(this)
+	    .setTitle("Pebble connection")
+	    .setMessage("No Pebble Watch detected. No activity will be logged.")
+	    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+	        public void onClick(DialogInterface dialog, int which) { 
+	        	
+	        }
+	     })
+	     .setIcon(android.R.drawable.ic_dialog_alert).create()
+	     .show();
     }
     
     public String getUserDeviceID() {
@@ -273,7 +367,10 @@ public class AccelDataLoggingActivity extends Activity {
         	unregisterReceiver(mActivityReceiver);
         	mActivityReceiver = null;
         }
-    }
+        
+        // Closing my app
+        PebbleKit.closeAppOnPebble(getApplicationContext(), ACTIVITY_RECOGNITION);
+    }	
     
     private void updateUi() {
         accelerometerListAdapter.notifyDataSetChanged();
@@ -305,7 +402,6 @@ public class AccelDataLoggingActivity extends Activity {
 				String searchText = search.getText().toString();
 				if (isSubString(searchText, activityList.get(i)))
 					filterList.add(activityList.get(i));
-
 			}
 
 			activityListView.setAdapter(new ArrayAdapter<String>(act, android.R.layout.simple_list_item_1,filterList));

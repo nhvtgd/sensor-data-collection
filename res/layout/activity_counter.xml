@@ -10,6 +10,14 @@
         android:layout_width="fill_parent"
     	android:layout_height="fill_parent"
     	android:orientation="vertical">
+    	<TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select an activity"
+        android:textColor="@color/red"
+        android:layout_gravity="center"
+        android:textAlignment="center"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
     	<LinearLayout 
     	android:layout_width="fill_parent"
     	android:layout_height="wrap_content"
@@ -38,6 +46,34 @@
         android:layout_width="fill_parent"
     	android:layout_height="fill_parent"
     	android:orientation="vertical">
+    		  <TextView
+        android:text="Activity Logging"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="@color/blue"
+        />
+	      
+    	<LinearLayout
+    	    android:layout_width="match_parent"
+    	    android:layout_height="51dp" >
+
+    <TextView
+        android:text="Activity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|left"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="30dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Duration (sec)"
+        android:layout_gravity="center|left"
+        android:textAlignment="center"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+</LinearLayout>
     		<ListView
                 android:id="@+id/accelerometer_list"
                 android:layout_width="fill_parent"

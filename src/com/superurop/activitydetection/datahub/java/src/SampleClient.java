@@ -1,17 +1,11 @@
 package com.superurop.activitydetection.datahub.java.src;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.THttpClient;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
-import com.superurop.activitydetection.datahub.java.Connection;
-import com.superurop.activitydetection.datahub.java.ConnectionParams;
-import com.superurop.activitydetection.datahub.java.DataHub;
 import com.superurop.activitydetection.datahub.java.DataHubClient;
 import com.superurop.activitydetection.datahub.java.ResultSet;
 import com.superurop.activitydetection.datahub.java.Tuple;
-
-import java.nio.ByteBuffer;
 
 /** 
  * Sample Java Client for DataHub
@@ -24,26 +18,39 @@ import java.nio.ByteBuffer;
 public class SampleClient {
   public static void main(String [] args) {
     try {
-      DataHubClient client = new DataHubClient();
-      client.pushData("tranDevice", String.valueOf(System.currentTimeMillis()), "Running", 10, 20, 100);
+      DataHubClient client = new DataHubClient("tranprod");
       
       // execute a query
-      ResultSet res = client.getClient().execute_sql(client.getConnection(), "select * from accelerometer;", null);
+      ResultSet res = client.getClient().execute_sql(client.getConnection(), "select * from motion_activity_view;", null);
       
       // print field names
-      for (String field_name : res.getField_names()) {
-        System.out.print(field_name + "\t");
+      FileWriter writer = new FileWriter("/Users/trannguyen/sensorData.csv");
+      for (int i = 0; i < res.getField_names().size(); i++){
+    	  writer.append(res.getField_names().get(i));
+    	  if (i == res.getField_names().size() - 1) {
+    		  writer.append("\n");
+    	  } else {
+    		  writer.append(",");
+    	  }
+        
       }
 
       System.out.println();
 
       // print tuples
       for (Tuple t : res.getTuples()) {
-        for (ByteBuffer cell : t.getCells()) {
-          System.out.print(new String(cell.array()) + "\t");
+        for (int i = 0; i < t.getCells().size(); i++) {
+          writer.append(new String(t.getCells().get(i).array()));
+          if (i == t.getCells().size()-1) {
+        	  writer.append("\n");
+          } else {
+        	  writer.append(",");
+          }
         }
         System.out.println();
-      }	  
+      }
+      writer.flush();
+      writer.close();
     } catch(Exception e) {
       e.printStackTrace();
     }
