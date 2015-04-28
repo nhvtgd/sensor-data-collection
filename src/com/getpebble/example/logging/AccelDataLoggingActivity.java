@@ -4,6 +4,7 @@ import static android.widget.Toast.makeText;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.IntentService;
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -111,6 +112,8 @@ public class AccelDataLoggingActivity extends Activity {
 	long start, stop;
 	
 	ArrayList<HashMap<String, String>> activity_duration_list = new ArrayList<HashMap<String, String>>();
+	
+	IntentService backgroundService; 
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {

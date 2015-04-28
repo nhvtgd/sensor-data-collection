@@ -1,5 +1,16 @@
 package com.superurop.activitydetection.datahub.java;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -36,6 +47,17 @@ public class DataHubClient {
 										"from (select * from (select json_array_elements (data) from test.dev_accel_data) as alldata) as temptable;";
 	final static String SQL_INSERT_USERNAME = "INSERT INTO username (uname,email) VALUES ('%s', '%s');";
 	
+	public static List<String> retrieveCredential(String fileName) {
+		List<String> secret = new ArrayList<String>();
+		Scanner scanner = new Scanner(DataHubClient.class.getResourceAsStream("secret.txt"));
+		
+		while (scanner.hasNext()) {
+			secret.add(scanner.nextLine());
+		}
+		scanner.close();
+		return secret;
+	}
+	
 	public DataHubClient(String repo_base) throws DBException, TException {
 		TTransport transport = new THttpClient("http://datahub.csail.mit.edu/service");
 		TProtocol protocol = new  TBinaryProtocol(transport);
@@ -44,8 +66,10 @@ public class DataHubClient {
 		// open connection
 		ConnectionParams con_params = new ConnectionParams();
 		con_params.setRepo_base(repo_base);
-		con_params.setApp_id("activity_collection_pebble");
-		con_params.setApp_token("b895b860-a4db-4e15-ba1b-263d5db0bb27");
+		
+		List<String> secret = retrieveCredential("secret.txt");
+		con_params.setApp_id(secret.get(0));
+		con_params.setApp_token(secret.get(1));
 		con = client.open_connection(con_params);
 		
 		try {
@@ -84,8 +108,10 @@ public class DataHubClient {
 			// 	open connection
 			ConnectionParams con_params = new ConnectionParams();
 			con_params.setRepo_base("trannguyen");
-			con_params.setApp_id("activity_collection_pebble");
-			con_params.setApp_token("b895b860-a4db-4e15-ba1b-263d5db0bb27");
+			
+			List<String> secret = retrieveCredential("/ActivityDetection/src/com/superurop/activitydetection/datahub/java/secret.txt");
+			con_params.setApp_id(secret.get(0));
+			con_params.setApp_token(secret.get(1));
 			Connection con = client.open_connection(con_params);
 		
 			String sqlStatement = String.format(SQL_INSERT_USERNAME, username, email);

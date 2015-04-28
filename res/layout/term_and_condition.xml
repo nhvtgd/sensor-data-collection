@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    
+ 	<LinearLayout
+            android:id="@+id/buttons"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_alignParentBottom="true">
+            
+ 	            <CheckBox
+            android:id="@+id/agreeBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Agree to Term and Condition" />
+        
+         <Button
+            android:id="@+id/agreeButton"
+            android:layout_width="100sp"
+            android:layout_height="wrap_content"
+            android:layout_margin="15sp"
+            android:background="@drawable/blue_background_login"
+            android:text="Submit"
+            android:textStyle="bold"
+             />
+ 	    
+        
+    </LinearLayout>
+
+
+        <ScrollView
+            android:layout_width="fill_parent" 
+    		android:layout_height="fill_parent"
+    		android:layout_above="@id/buttons">
+    	<TextView
+    	    android:singleLine="false"
+            android:id="@+id/term_and_condition"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/term_and_condition"
+            android:clickable="true" />
+    	</ScrollView>
+        
+
+</RelativeLayout>

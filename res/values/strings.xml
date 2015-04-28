@@ -18,4 +18,67 @@
     
 	<string name="intensity_selection">Intensity Level</string>	
 	<string name="dominant_hand">Is your pebble on your dominant hand?</string>	
+	<string name="term_and_condition">
+<b>Updated April 22, 2015 \n\n
+MIT big data Living Lab\n\n
+Project:  Pebble Watch app</b>\n\n
+
+========================\n\n
+
+<b>Mobile App - Mobile User Consent to Participate</b> \n\n
+
+=========================\n\n
+=========================\n\n
+
+
+<b>WELCOME AND CONSENT TO PARTICIPATE</b> \n\n
+
+MIT Big Data Living Labs:  Exploring Quantitative Use of Human Behavior Data for Managing and Improving MIT\n\n
+
+By downloading and using this mobile app you are participating in a research study by the MIT Big Data Living Lab at Massachusetts Institute of Technology (M.I.T.), the results of which may be published in a thesis, scientific paper, or publically available MIT report. You should read the information below before deciding whether or not to participate.\n\n
+
+<b>Purpose of the Living Lab</b> \n\n
+
+Today’s mobile phones, payment systems, building infrastructure (wifi access points, etc) and campus management systems, are becoming powerful computing and sensing platforms. We are investigating ways to help people make use of the information collected by these systems, as well as aggregate data contributed by many users, to improve lives as well as aid the management of MIT and explore new services aimed at improving the wellbeing of the MIT community as a whole. \n\n
+
+<b>Procedures</b>\n\n
+
+If you volunteer to participate in this study, you will use the Pebble Watch app on your mobile phone to collect and store activity data. Your data will be encoded and used for statistical purposes only, and will not be published in a way that could be personally identifiable. \n\n
+
+<b>About Pebble Watch app</b>\n\n
+
+This Pebble watch app allows you to record your activity data on your phone and upload it to your own Personal Data Store on DataHub. DataHub (http://datahub.csail.mit.edu/) is a unified data management and collaboration platform under development at MIT CSAIL.  You must have a DataHub account for the app to work.  A DataHub account will be created for you upon your consent to participate, you can login at any time to access your data (username and password can be found on app’s “About” tab.)\n\n
+
+<b>Logging Activities</b>\n\n
+
+Users can log activity data using the phone (activity selection screen).  User selects Activity (required), Intensity (required), location of watch (dominant/non-dominant) and then Start to begin recording activity data.  When logging mobile sensor data during activity, user should keep phone on them.\n\n
+
+When activity is complete press Stop on the watch and the data will be submitted to your Personal Data Store on DataHub [activity; intensity; location of watch; duration; and sensor data].  Sensor data includes: motion sensors (accelerometer), activity info, and basic device info.  It does not include call logs, audio, or video.\n\n
+
+<b>Data and Privacy Risks</b>\n\n
+
+This app will send your data to DataHub.  By using this app you agree to sharing your data with researchers on the MIT Big Data Living Lab team.  One concern associated with this study is privacy risk.  Several measures are put into place to minimize risks and to manage privacy:\n\n
+All data will be stored on a secure, restricted-access server.\n\n
+Users can login to access, edit and export personal data via their DataHub account at any time. \n\n
+Your data will be de-identified and combined with other user data for the purposes of aggregate analysis and visualization.  \n\n
+Contents of SMS messages, phone calls, image and media files, are not captured.\n\n
+
+<b>Potential Benefits</b>\n\n
+
+Part of this project involves presenting data to participants, you will have access to informative data about yourself which is not commonly available. For example, this might include time-based or aggregate information about your physical activity.  Over time, our aim is that participants will be able to write their own apps that access MIT community data, request anonymous aggregate data from other participants, and establish secure, auditable information sharing links with other participants.\n\n
+
+<b>Participation and Withdrawal</b>\n\n
+
+Your participation in this study is completely voluntary.  If you choose to be in this study, you may subsequently withdraw from it at any time without penalty or consequences of any kind. \n\n
+
+For more information on the MIT Big Data Living Lab, including list of investigators and contact information see: <a href="http://livinglab.mit.edu">Living Lab</a>\n\n
+
+Thank You! \n\n
+
+=======================\n\n
+=======================\n\n
+
+	    
+	    
+	</string>
 </resources>

@@ -21,7 +21,8 @@ public class SampleClient {
       DataHubClient client = new DataHubClient("tranprod");
       
       // execute a query
-      ResultSet res = client.getClient().execute_sql(client.getConnection(), "select * from motion_activity_view;", null);
+      ResultSet res = client.getClient().execute_sql(client.getConnection(), "select count(*) from motion_activity_view;", null);
+      
       
       // print field names
       FileWriter writer = new FileWriter("/Users/trannguyen/sensorData.csv");
@@ -40,6 +41,7 @@ public class SampleClient {
       // print tuples
       for (Tuple t : res.getTuples()) {
         for (int i = 0; i < t.getCells().size(); i++) {
+          System.out.println(new String(t.getCells().get(i).array()));
           writer.append(new String(t.getCells().get(i).array()));
           if (i == t.getCells().size()-1) {
         	  writer.append("\n");

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-	package="com.getpebble.example.logging" android:versionCode="13"
+	package="com.getpebble.example.logging" android:versionCode="14"
 	android:versionName="0.2">
 
 
@@ -74,6 +74,12 @@
 		<activity android:name=".login.SignInScreen"
 			android:screenOrientation="portrait"
             android:launchMode="standard">
+		</activity>
+		
+		<activity android:name=".TermAndCondition"
+		    android:screenOrientation="portrait"
+		    android:launchMode="standard"
+		    >
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
@@ -83,7 +89,8 @@
 			    <action android:name="android.intent.action.SEND" />
         		<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
-
+		    
+		    
 		</activity>
 	</application>
 </manifest>
